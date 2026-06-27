@@ -58,9 +58,11 @@ export default function Header({ categories = [], activeCategory, onSelectCatego
       <div className="header-container">
         
         {/* Mobile Menu Button */}
-        <button className="mobile-menu-toggle" onClick={toggleMobileMenu} aria-label="Toggle menu">
-          {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+        {!mobileMenuOpen && (
+          <button className="mobile-menu-toggle" onClick={toggleMobileMenu} aria-label="Toggle menu">
+            <Menu size={24} />
+          </button>
+        )}
 
         {/* Logo */}
         <a href="/" className="logo" onClick={(e) => { e.preventDefault(); handleCategorySelect('ALL'); }}>
@@ -89,6 +91,12 @@ export default function Header({ categories = [], activeCategory, onSelectCatego
                 </button>
               </li>
             ))}
+            {/* Mobile close button inside the list */}
+            <li className="mobile-menu-close-item">
+              <button className="mobile-menu-close-btn" onClick={() => setMobileMenuOpen(false)} aria-label="Close menu">
+                <X size={20} />
+              </button>
+            </li>
           </ul>
         </nav>
 

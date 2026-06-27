@@ -1,0 +1,29 @@
+name: Automated News Scraper Bot
+
+on:
+  schedule:
+    # Run once every hour
+    - cron: '0 */3 * * *'
+  workflow_dispatch: # Allow manual trigger from GitHub UI
+
+jobs:
+  run-scraper:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run News Scraper Script
+        env:
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+        run: node src/bot/newsScraper.js

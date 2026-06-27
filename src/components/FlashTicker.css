@@ -1,0 +1,99 @@
+.flash-ticker {
+  display: flex;
+  align-items: center;
+  background-color: #0F172A;
+  color: #FFFFFF;
+  height: 48px;
+  font-size: 13.5px;
+  font-weight: 500;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+}
+
+.flash-label {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background-color: #E53E3E;
+  height: 100%;
+  padding: 0 24px;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  position: relative;
+  flex-shrink: 0;
+  font-style: italic;
+}
+
+.flash-icon {
+  fill: #FFFFFF;
+}
+
+.flash-content {
+  flex-grow: 1;
+  overflow: hidden;
+  padding: 0 20px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  position: relative;
+}
+
+.flash-text {
+  display: inline-block;
+  opacity: 0.95;
+  letter-spacing: 0.2px;
+}
+
+.flash-text.fade-in {
+  animation: tickerFadeIn 0.5s ease-in-out;
+}
+
+.flash-controls {
+  display: flex;
+  align-items: center;
+  height: 100%;
+  border-left: 1px solid #1E293B;
+  flex-shrink: 0;
+}
+
+.control-btn {
+  background: none;
+  border: none;
+  color: #94A3B8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 100%;
+  transition: all 0.2s ease;
+  cursor: pointer;
+}
+
+.control-btn:hover {
+  color: #FFFFFF;
+  background-color: #1E293B;
+}
+
+@keyframes tickerFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 768px) {
+  .flash-label {
+    padding: 0 12px;
+    font-size: 12px;
+  }
+  .flash-content {
+    padding: 0 10px;
+  }
+  .control-btn {
+    width: 36px;
+  }
+}

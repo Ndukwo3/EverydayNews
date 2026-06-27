@@ -1,0 +1,139 @@
+.finance-widget {
+  background-color: var(--white);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.widget-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 10px;
+}
+
+.trend-icon {
+  color: var(--primary);
+}
+
+.widget-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: 0.5px;
+}
+
+.finance-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.asset-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 8px;
+  border-radius: var(--radius-md);
+  transition: background-color 0.4s ease, transform 0.2s ease;
+  border: 1px solid transparent;
+}
+
+/* Flash Ticking Effects */
+.asset-row.flash-up {
+  background-color: rgba(34, 197, 94, 0.15); /* Green flash */
+  border-color: rgba(34, 197, 94, 0.3);
+}
+
+.asset-row.flash-down {
+  background-color: rgba(239, 68, 68, 0.15); /* Red flash */
+  border-color: rgba(239, 68, 68, 0.3);
+}
+
+.asset-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.asset-logo-container {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: var(--bg-alt);
+  border: 1px solid var(--border);
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.asset-meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.asset-symbol-row {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+}
+
+.asset-symbol {
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--text-main);
+}
+
+.asset-name {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
+
+.asset-type-label {
+  font-size: 9px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
+
+.asset-values {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+}
+
+.asset-price {
+  font-size: 13px;
+  font-weight: 750;
+  color: var(--text-main);
+  transition: color 0.3s ease;
+}
+
+.asset-row.flash-up .asset-price {
+  color: #22c55e;
+}
+
+.asset-row.flash-down .asset-price {
+  color: #ef4444;
+}
+
+.asset-change {
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.asset-change.trend-up {
+  color: #22c55e;
+}
+
+.asset-change.trend-down {
+  color: #ef4444;
+}

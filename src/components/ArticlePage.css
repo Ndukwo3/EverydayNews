@@ -292,6 +292,12 @@
     grid-template-columns: 1fr;
     gap: 30px;
   }
+  .article-sidebar-left {
+    order: 2;
+  }
+  .article-main-content-new {
+    order: 1;
+  }
 }
 
 /* ── Suggested Picks Section ── */

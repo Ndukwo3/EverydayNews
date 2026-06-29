@@ -53,6 +53,8 @@ const FEEDS = [
 
   // --- TECH ---
   { url: 'http://rss.cnn.com/rss/edition_technology.rss', category: 'TECH', country: 'US' },
+  { url: 'https://www.wired.com/feed/rss', category: 'TECH', country: 'US' },
+  { url: 'https://feeds.macrumors.com/MacRumors-All', category: 'TECH', country: 'US' },
   { url: 'https://techpoint.africa/feed/', category: 'TECH', country: 'Nigeria' },
   { url: 'https://techcabal.com/feed/', category: 'TECH', country: 'Nigeria' },
 

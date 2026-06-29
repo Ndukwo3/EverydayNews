@@ -1,6 +1,5 @@
 import React from 'react';
 import { Clock, User } from 'lucide-react';
-import FeaturedBanner from './FeaturedBanner';
 import './EditorsPick.css';
 
 export default function EditorsPick({ articles = [], onArticleClick }) {
@@ -20,10 +19,7 @@ export default function EditorsPick({ articles = [], onArticleClick }) {
   return (
     <div className="editors-pick-section">
       
-      {/* 1. Futuristic Dynamic magazines Picker Banner */}
-      <FeaturedBanner />
-
-      {/* 2. Editor's Pick Title */}
+      {/* Editor's Pick Title */}
       <div className="editors-pick-header">
         <h2 className="editors-pick-title">
           <span className="title-editors">Editor's</span> <span className="title-pick">Pick</span>

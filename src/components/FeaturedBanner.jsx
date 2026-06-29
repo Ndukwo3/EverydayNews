@@ -1,5 +1,7 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Play, Pause, ExternalLink } from 'lucide-react';
+import { fetchEditorsPicks } from '../lib/api';
 import './FeaturedBanner.css';
 
 // Stunning fallback magazines/posts that look like futuristic science/finance picks
@@ -51,83 +53,38 @@ export default function FeaturedBanner() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPlaying, setIsPlaying] = useState(true);
   const [isLoading, setIsLoading] = useState(false);
+  const navigate = useNavigate();
 
-  // Try to load fresh headlines from RSS feeds and merge them into our gorgeous slides
+  // Load fresh editor's picks from our database
   useEffect(() => {
     let active = true;
     
-    async function fetchLiveHeadlines() {
+    async function loadFeatured() {
       setIsLoading(true);
       try {
-        const feeds = [
-          {
-            site: 'INSIDER',
-            url: 'https://www.businessinsider.com/rss',
-            fallbackIndex: 0
-          },
-          {
-            site: 'INVESTOPEDIA',
-            url: 'https://www.investopedia.com/feed-rss-4769781',
-            fallbackIndex: 1
-          },
-          {
-            site: 'THE ECONOMIST',
-            url: 'https://www.economist.com/sections/business-finance/rss.xml',
-            fallbackIndex: 2
-          }
-        ];
-
-        // Fetch each feed via a public CORS proxy
-        const updatedSlides = [...FALLBACK_SLIDES];
-
-        for (const feed of feeds) {
-          try {
-            const proxyUrl = `https://api.allorigins.win/get?url=${encodeURIComponent(feed.url)}`;
-            const res = await fetch(proxyUrl);
-            const json = await res.json();
-            
-            if (json.contents) {
-              const parser = new DOMParser();
-              const xmlDoc = parser.parseFromString(json.contents, 'text/xml');
-              const firstItem = xmlDoc.querySelector('item');
-              
-              if (firstItem && active) {
-                const rawTitle = firstItem.querySelector('title')?.textContent || '';
-                const link = firstItem.querySelector('link')?.textContent || feed.url;
-                const description = firstItem.querySelector('description')?.textContent || '';
-                
-                // Clean up title (remove HTML tags, limit length, uppercase for style)
-                const cleanTitle = rawTitle.replace(/<[^>]*>/g, '').trim().toUpperCase();
-                // Clean up description/subtitle
-                const cleanDesc = description.replace(/<[^>]*>/g, '').trim().slice(0, 120) + '...';
-
-                // Update the matching slide info
-                if (cleanTitle) {
-                  updatedSlides[feed.fallbackIndex] = {
-                    ...updatedSlides[feed.fallbackIndex],
-                    title: cleanTitle.length > 50 ? cleanTitle.slice(0, 50) + '...' : cleanTitle,
-                    subtitle: cleanDesc || updatedSlides[feed.fallbackIndex].subtitle,
-                    link: link
-                  };
-                }
-              }
-            }
-          } catch (e) {
-            console.warn(`Could not update live feed for ${feed.site}, using premium fallback.`, e);
-          }
-        }
-
-        if (active) {
-          setSlides(updatedSlides);
+        const dbPicks = await fetchEditorsPicks();
+        if (active && dbPicks && dbPicks.length > 0) {
+          const formattedSlides = dbPicks.map((item, idx) => ({
+            id: item.id,
+            site: item.author_name ? item.author_name.toUpperCase() : 'EVERYDAY NEWS',
+            category: item.category || 'FEATURED',
+            title: item.title.toUpperCase(),
+            subtitle: item.excerpt,
+            image: item.image_url || FALLBACK_SLIDES[idx % FALLBACK_SLIDES.length].image,
+            link: `/article/${item.id}`,
+            isInternal: true,
+            keywords: item.author_name ? `BY · ${item.author_name.toUpperCase()}` : 'BREAKING · NEWS'
+          }));
+          setSlides(formattedSlides);
         }
       } catch (err) {
-        console.error('Failed to fetch feeds', err);
+        console.warn("Failed to load featured banner slides, keeping fallback:", err);
       } finally {
         if (active) setIsLoading(false);
       }
     }
 
-    fetchLiveHeadlines();
+    loadFeatured();
     return () => {
       active = false;
     };
@@ -157,10 +114,14 @@ export default function FeaturedBanner() {
   return (
     <div 
       className="future-featured-banner"
-      onMouseEnter={() => setIsPlaying(false)}
-      onMouseLeave={() => setIsPlaying(true)}
-      onClick={() => window.open(currentSlide.link, '_blank')}
-      title="Click to read original article"
+      onClick={() => {
+        if (currentSlide.isInternal) {
+          navigate(currentSlide.link);
+        } else {
+          window.open(currentSlide.link, '_blank');
+        }
+      }}
+      title="Click to read article"
     >
       {/* Background Slides Container */}
       <div className="slides-viewport">

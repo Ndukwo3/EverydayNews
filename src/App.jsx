@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Routes, Route, useNavigate } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { mockFlashNews, mockArticles, mockStocks, mockEditorsPicks, mockLiveBanner, mockTrendingArticles, mockStorySection } from './newsData';
-import { fetchArticles as apiFetchArticles, fetchFlashNews as apiFetchFlashNews, fetchTrendingArticles as apiFetchTrendingArticles, fetchEditorsPicks as apiFetchEditorsPicks, fetchStoryArticles as apiFetchStoryArticles } from './lib/api';
+import { fetchArticles as apiFetchArticles, fetchFlashNews as apiFetchFlashNews, fetchTrendingArticles as apiFetchTrendingArticles, fetchEditorsPicks as apiFetchEditorsPicks, fetchStoryArticles as apiFetchStoryArticles, logVisit } from './lib/api';
 import { useAuth } from './context/AuthContext';
 import FlashTicker from './components/FlashTicker';
 import Header from './components/Header';
@@ -18,6 +18,38 @@ import LoginModal from './components/LoginModal';
 import NewsPage from './components/NewsPage';
 import { Clock, Sparkles, X, Eye, EyeOff } from 'lucide-react';
 import './App.css';
+
+// Helper to interleave/mix articles from different categories to ensure home page diversity
+function mixArticlesByCategory(articlesList) {
+  if (!articlesList || articlesList.length === 0) return [];
+  
+  // Group articles by category
+  const groups = {};
+  articlesList.forEach(art => {
+    const cat = art.category || 'NEWS';
+    if (!groups[cat]) groups[cat] = [];
+    groups[cat].push(art);
+  });
+  
+  // Interleave the grouped articles
+  const mixed = [];
+  const categories = Object.keys(groups);
+  let hasMore = true;
+  let index = 0;
+  
+  while (hasMore) {
+    hasMore = false;
+    categories.forEach(cat => {
+      if (groups[cat][index]) {
+        mixed.push(groups[cat][index]);
+        hasMore = true;
+      }
+    });
+    index++;
+  }
+  
+  return mixed;
+}
 
 // ── Homepage ──────────────────────────────────────────────
 function HomePage() {
@@ -89,8 +121,9 @@ function HomePage() {
             created_at: a.created_at,
             body: a.body
           }));
-          setArticles(normalized);
-          localStorage.setItem('everyday_news_articles', JSON.stringify(normalized));
+          const mixedArticles = mixArticlesByCategory(normalized);
+          setArticles(mixedArticles);
+          localStorage.setItem('everyday_news_articles', JSON.stringify(mixedArticles));
           
           // Generate interactive flash items from hidden articles (require "Load More" to be seen)
           const nonFeatured = normalized.filter(a => !a.featured);
@@ -311,6 +344,22 @@ function HomePage() {
 
 // ── App Router ────────────────────────────────────────────
 export default function App() {
+  const location = useLocation();
+
+  useEffect(() => {
+    // Generate/retrieve Session ID
+    let sid = localStorage.getItem('newsSessionId');
+    if (!sid) {
+      sid = crypto.randomUUID();
+      localStorage.setItem('newsSessionId', sid);
+    }
+    // Log the page visit to Supabase
+    logVisit(location.pathname, sid);
+    
+    // Reset scroll position to top on navigation
+    window.scrollTo(0, 0);
+  }, [location.pathname]);
+
   return (
     <>
       <Routes>

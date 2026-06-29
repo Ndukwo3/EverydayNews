@@ -58,7 +58,8 @@ const FEEDS = [
 
   // --- ENTERTAINMENT ---
   { url: 'http://rss.cnn.com/rss/edition_entertainment.rss', category: 'ENTERTAINMENT', country: 'US' },
-  { url: 'https://www.bellanaija.com/category/entertainment/feed/', category: 'ENTERTAINMENT', country: 'Nigeria' }
+  { url: 'https://www.gistmania.com/talk/index.php?type=rss', category: 'ENTERTAINMENT', country: 'Nigeria' },
+  { url: 'https://www.yabaleftonline.ng/feed/', category: 'ENTERTAINMENT', country: 'Nigeria' }
 ];
 
 // Fallback images
@@ -554,6 +555,16 @@ async function scrapeFeeds() {
   }
 
   console.log(`Finished run. Added ${addedCount} new articles.`);
+
+  // Log scraper run status to database
+  try {
+    const { error: logError } = await supabase
+      .from('scraper_runs')
+      .insert([{ status: 'success', articles_added: addedCount }]);
+    if (logError) console.error('Failed to save scraper run log to DB:', logError);
+  } catch (logErr) {
+    console.error('Failed to log scraper run:', logErr.message);
+  }
 }
 
 scrapeFeeds();

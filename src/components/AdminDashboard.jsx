@@ -21,7 +21,8 @@ import {
   fetchAllStoryArticles,
   createStoryArticle,
   updateStoryArticle,
-  deleteStoryArticle
+  deleteStoryArticle,
+  fetchAnalyticsSummary
 } from '../lib/api';
 import './AdminDashboard.css';
 
@@ -44,7 +45,11 @@ export default function AdminDashboard() {
   const navigate = useNavigate();
 
   // Navigation
-  const [activeTab, setActiveTab] = useState('articles');
+  const [activeTab, setActiveTab] = useState('overview');
+
+  // Analytics state
+  const [analytics, setAnalytics] = useState(null);
+  const [loadingAnalytics, setLoadingAnalytics] = useState(true);
 
   // Articles state
   const [articles, setArticles] = useState([]);
@@ -126,12 +131,24 @@ export default function AdminDashboard() {
   // ─── Load data ───
   useEffect(() => {
     if (!isAuthenticated) return;
+    loadAnalytics();
     loadArticles();
     loadFlashNews();
     loadTrendingArticles();
     loadEditorsPicks();
     loadStoryArticles();
   }, [isAuthenticated]);
+
+  async function loadAnalytics() {
+    setLoadingAnalytics(true);
+    try {
+      const data = await fetchAnalyticsSummary();
+      setAnalytics(data);
+    } catch (err) {
+      showToast('Failed to load analytics: ' + err.message, 'error');
+    }
+    setLoadingAnalytics(false);
+  }
 
   async function loadArticles() {
     setLoadingArticles(true);
@@ -529,6 +546,37 @@ export default function AdminDashboard() {
     );
   }
 
+  // ─── Analytics Helpers ───
+  const last7Days = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    return d.toISOString().split('T')[0];
+  }).reverse();
+
+  const visitsByDate = last7Days.map(date => {
+    const dayVisits = analytics?.recentVisits?.filter(v => v.created_at.startsWith(date)) || [];
+    const label = new Date(date).toLocaleDateString('en-US', { weekday: 'short', day: 'numeric' });
+    return { date, label, count: dayVisits.length };
+  });
+
+  const maxVisits = Math.max(...visitsByDate.map(d => d.count), 5);
+
+  const categoryViews = {};
+  const allArticlesList = [...articles, ...trendingItems, ...editorsPicksItems, ...storyArticlesItems];
+  
+  // Count the actual articles published in each category (this shows content distribution)
+  allArticlesList.forEach(art => {
+    const cat = art.category || 'NEWS';
+    categoryViews[cat] = (categoryViews[cat] || 0) + 1;
+  });
+
+  const categoryChartData = Object.entries(categoryViews)
+    .map(([category, views]) => ({ category, views }))
+    .sort((a, b) => b.views - a.views) // Sort by most articles first
+    .slice(0, 6);
+
+  const maxCategoryViews = Math.max(...categoryChartData.map(c => c.views), 5);
+
   // ─── RENDER ───
   return (
     <div className="admin-dashboard">
@@ -552,6 +600,18 @@ export default function AdminDashboard() {
         </div>
 
         <nav className="admin-nav">
+          <button
+            className={`admin-nav-item ${activeTab === 'overview' ? 'active' : ''}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="7" height="9"/>
+              <rect x="14" y="3" width="7" height="5"/>
+              <rect x="14" y="12" width="7" height="9"/>
+              <rect x="3" y="16" width="7" height="5"/>
+            </svg>
+            Overview
+          </button>
           <button
             className={`admin-nav-item ${activeTab === 'articles' ? 'active' : ''}`}
             onClick={() => { setActiveTab('articles'); setEditingArticle(null); }}
@@ -633,6 +693,231 @@ export default function AdminDashboard() {
 
       {/* Main Content */}
       <main className="admin-main">
+
+        {/* ════════ OVERVIEW/ANALYTICS TAB ════════ */}
+        {activeTab === 'overview' && (
+          <>
+            <header className="admin-page-header">
+              <div>
+                <h1 className="admin-page-title">Dashboard Overview</h1>
+                <p className="admin-page-subtitle">Real-time traffic and operations analytics</p>
+              </div>
+              <button className="admin-btn-primary" onClick={loadAnalytics} disabled={loadingAnalytics}>
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2.5" style={{ marginRight: 6 }}>
+                  <path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/>
+                </svg>
+                {loadingAnalytics ? 'Refreshing...' : 'Refresh Stats'}
+              </button>
+            </header>
+
+            {loadingAnalytics && !analytics ? (
+              <div className="admin-loading">
+                <div className="admin-spinner" />
+                <p>Loading analytics…</p>
+              </div>
+            ) : (
+              <div className="admin-analytics-grid">
+                
+                {/* 1. KPI Cards */}
+                <div className="analytics-kpis">
+                  <div className="kpi-card">
+                    <div className="kpi-icon blue">👁</div>
+                    <div className="kpi-info">
+                      <span className="kpi-value">{analytics?.totalViews.toLocaleString()}</span>
+                      <span className="kpi-label">Total Views</span>
+                    </div>
+                  </div>
+                  <div className="kpi-card">
+                    <div className="kpi-icon green">👤</div>
+                    <div className="kpi-info">
+                      <span className="kpi-value">{analytics?.uniqueVisitors.toLocaleString()}</span>
+                      <span className="kpi-label">Unique Visitors</span>
+                    </div>
+                  </div>
+                  <div className="kpi-card">
+                    <div className="kpi-icon red">✍</div>
+                    <div className="kpi-info">
+                      <span className="kpi-value">{analytics?.totalArticles.toLocaleString()}</span>
+                      <span className="kpi-label">Total Articles</span>
+                    </div>
+                  </div>
+                  <div className="kpi-card">
+                    <div className="kpi-icon purple">💬</div>
+                    <div className="kpi-info">
+                      <span className="kpi-value">{analytics?.totalComments.toLocaleString()}</span>
+                      <span className="kpi-label">Total Comments</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* 2. Interactive SVG Charts */}
+                <div className="analytics-charts-row">
+                  {/* Traffic Line Chart */}
+                  <div className="analytics-chart-box card-trend">
+                    <h3 className="chart-box-title">7-Day Traffic Trend</h3>
+                    <div className="chart-container-svg">
+                      <svg viewBox="0 0 500 220" className="svg-trend-chart">
+                        <defs>
+                          <linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">
+                            <stop offset="0%" stopColor="rgba(225, 29, 72, 0.4)" />
+                            <stop offset="100%" stopColor="rgba(225, 29, 72, 0.0)" />
+                          </linearGradient>
+                        </defs>
+                        {/* Grid lines */}
+                        <line x1="40" y1="20" x2="480" y2="20" stroke="#f1f5f9" strokeWidth="1" />
+                        <line x1="40" y1="70" x2="480" y2="70" stroke="#f1f5f9" strokeWidth="1" />
+                        <line x1="40" y1="120" x2="480" y2="120" stroke="#f1f5f9" strokeWidth="1" />
+                        <line x1="40" y1="170" x2="480" y2="170" stroke="#cbd5e1" strokeWidth="1" />
+                        
+                        {/* Grid labels Y */}
+                        <text x="15" y="24" fontSize="10" fill="#94a3b8" textAnchor="middle">{Math.round(maxVisits)}</text>
+                        <text x="15" y="74" fontSize="10" fill="#94a3b8" textAnchor="middle">{Math.round(maxVisits * 0.66)}</text>
+                        <text x="15" y="124" fontSize="10" fill="#94a3b8" textAnchor="middle">{Math.round(maxVisits * 0.33)}</text>
+                        <text x="15" y="174" fontSize="10" fill="#94a3b8" textAnchor="middle">0</text>
+
+                        {/* Generate points path */}
+                        {(() => {
+                          const points = visitsByDate.map((day, idx) => {
+                            const x = 40 + idx * ((480 - 40) / 6);
+                            const y = 170 - (day.count / maxVisits) * 140;
+                            return { x, y };
+                          });
+                          const pathD = points.reduce((acc, p, idx) => 
+                            idx === 0 ? `M ${p.x} ${p.y}` : `${acc} L ${p.x} ${p.y}`, ''
+                          );
+                          const areaD = `${pathD} L ${points[points.length-1].x} 170 L ${points[0].x} 170 Z`;
+                          
+                          return (
+                            <>
+                              {/* Filled Area */}
+                              <path d={areaD} fill="url(#trendGrad)" />
+                              {/* Line */}
+                              <path d={pathD} fill="none" stroke="#e11d48" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+                              {/* Data Points */}
+                              {points.map((p, idx) => (
+                                <g key={idx} className="chart-dot-group">
+                                  <circle cx={p.x} cy={p.y} r="5" fill="#e11d48" stroke="#ffffff" strokeWidth="2" className="chart-dot" />
+                                  <circle cx={p.x} cy={p.y} r="10" fill="transparent" className="chart-hover-trigger" />
+                                  <text x={p.x} y={p.y - 12} fontSize="10" fontWeight="700" fill="#1e293b" textAnchor="middle" className="chart-point-value">
+                                    {visitsByDate[idx].count}
+                                  </text>
+                                </g>
+                              ))}
+                            </>
+                          );
+                        })()}
+
+                        {/* Grid labels X */}
+                        {visitsByDate.map((day, idx) => {
+                          const x = 40 + idx * ((480 - 40) / 6);
+                          return (
+                            <text key={idx} x={x} y="195" fontSize="10" fontWeight="600" fill="#64748b" textAnchor="middle">
+                              {day.label}
+                            </text>
+                          );
+                        })}
+                      </svg>
+                    </div>
+                  </div>
+
+                  {/* Category Distribution bar chart */}
+                  <div className="analytics-chart-box card-categories">
+                    <h3 className="chart-box-title">Articles by Category</h3>
+                    <div className="chart-container-svg">
+                      {categoryChartData.length === 0 ? (
+                        <div className="admin-empty-small">No category articles logged yet.</div>
+                      ) : (
+                        <svg viewBox="0 0 420 220" className="svg-bar-chart">
+                          {categoryChartData.map((item, idx) => {
+                            const barWidth = 28;
+                            const gap = 30;
+                            const offsetLeft = 40;
+                            const x = offsetLeft + idx * (barWidth + gap);
+                            const barHeight = (item.views / maxCategoryViews) * 130;
+                            const y = 160 - barHeight;
+
+                            return (
+                              <g key={idx} className="chart-bar-group">
+                                {/* Bar background shimmer on hover */}
+                                <rect x={x} y="20" width={barWidth} height="140" fill="rgba(0,0,0,0.01)" rx="4" />
+                                {/* Value indicator */}
+                                <text x={x + barWidth/2} y={y - 8} fontSize="9" fontWeight="700" fill="#e11d48" textAnchor="middle">
+                                  {item.views.toLocaleString()}
+                                </text>
+                                {/* Colored Bar */}
+                                <rect 
+                                  x={x} 
+                                  y={y} 
+                                  width={barWidth} 
+                                  height={barHeight} 
+                                  fill={idx % 2 === 0 ? "#e11d48" : "#fb7185"} 
+                                  rx="4" 
+                                  className="chart-bar" 
+                                />
+                                {/* Category Label */}
+                                <text x={x + barWidth/2} y="185" fontSize="9" fontWeight="700" fill="#64748b" textAnchor="middle">
+                                  {item.category}
+                                </text>
+                              </g>
+                            );
+                          })}
+                          {/* Baseline */}
+                          <line x1="20" y1="160" x2="390" y2="160" stroke="#cbd5e1" strokeWidth="1" />
+                        </svg>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
+                {/* 3. Scraper Logs Table */}
+                <div className="analytics-scraper-section">
+                  <div className="scraper-header-row">
+                    <h3 className="scraper-section-title">🤖 AI Scraper Status & History</h3>
+                    <span className="scraper-auto-badge">Cron Job Status: ACTIVE (3 Hours)</span>
+                  </div>
+
+                  {analytics?.scraperLogs.length === 0 ? (
+                    <div className="admin-empty">No scraper runs logged yet.</div>
+                  ) : (
+                    <div className="admin-table-container">
+                      <table className="admin-table">
+                        <thead>
+                          <tr>
+                            <th>Run Time</th>
+                            <th>Status</th>
+                            <th>Articles Added</th>
+                            <th>Error Logs</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {analytics?.scraperLogs.map((run) => (
+                            <tr key={run.id}>
+                              <td className="admin-date-cell">
+                                {new Date(run.created_at).toLocaleString('en-US', { day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
+                              </td>
+                              <td>
+                                <span className={`scraper-status-badge ${run.status}`}>
+                                  {run.status.toUpperCase()}
+                                </span>
+                              </td>
+                              <td className="admin-nav-count-cell" style={{ fontWeight: 800, color: '#e11d48' }}>
+                                + {run.articles_added} articles
+                              </td>
+                              <td className="scraper-error-cell" style={{ color: run.error_message ? '#ef4444' : '#64748b', fontSize: '12px' }}>
+                                {run.error_message || 'No errors logged. Operations nominal.'}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </div>
+
+              </div>
+            )}
+          </>
+        )}
 
         {/* ════════ ARTICLES TAB ════════ */}
         {activeTab === 'articles' && !editingArticle && (

@@ -82,11 +82,8 @@ function HomePage() {
   
   const [stocks] = useState(mockStocks);
   
-  // Only show loading shimmer if we don't have any cached articles yet
-  const [isLoading, setIsLoading] = useState(() => {
-    const cached = localStorage.getItem('everyday_news_articles');
-    return !cached;
-  });
+  // Always show loading shimmer while fetching the latest news
+  const [isLoading, setIsLoading] = useState(true);
 
   const categories = ['NEWS', 'BUSINESS', 'FINANCE', 'SPORT', 'TRAVEL', 'TECH', 'ENTERTAINMENT'];
 

@@ -14,6 +14,7 @@ import pino from 'pino';
 import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import fs from 'fs';
+import http from 'http';
 
 // Supabase Setup
 const SUPABASE_URL = 'https://thmndoeavlwhjvygmxys.supabase.co';
@@ -312,3 +313,12 @@ async function runQueueBroadcast(sock, slotName) {
 }
 
 connectToWhatsApp();
+
+// Start a dummy HTTP server so Render health checks pass
+const PORT = process.env.PORT || 10000;
+http.createServer((req, res) => {
+  res.writeHead(200);
+  res.end('Everyday News WhatsApp Bot is running!');
+}).listen(PORT, () => {
+  console.log(`HTTP Server listening on port ${PORT} to keep Render happy!`);
+});

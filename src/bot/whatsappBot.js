@@ -130,7 +130,7 @@ async function connectToWhatsApp() {
     // Trigger manual test broadcast to the user
     else if (cleanMsg === '!TEST' || cleanMsg === '!TESTBROADCAST') {
       console.log(`[TEST] Manual test broadcast triggered by ${cleanPhone}`);
-      await runSingleBroadcast(sock, `${cleanPhone}@s.whatsapp.net`, 'morning');
+      await runSingleBroadcast(sock, from, 'morning');
     }
   });
 

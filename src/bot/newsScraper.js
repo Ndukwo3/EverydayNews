@@ -459,6 +459,19 @@ async function fetchFullArticleText(url, title, excerpt, category) {
   return getCategoryFallback(title, excerpt, category);
 }
 
+function slugify(text) {
+  if (!text) return '';
+  return text
+    .toString()
+    .toLowerCase()
+    .trim()
+    .replace(/\s+/g, '-')
+    .replace(/[^\w\-]+/g, '')
+    .replace(/\-\-+/g, '-')
+    .replace(/^-+/, '')
+    .replace(/-+$/, '');
+}
+
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function scrapeFeeds() {
@@ -514,6 +527,7 @@ async function scrapeFeeds() {
 
         let insertPayload = {
           title: cleanTitle,
+          slug: slugify(cleanTitle),
           excerpt,
           body,
           image_url,

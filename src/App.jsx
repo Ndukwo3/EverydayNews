@@ -16,7 +16,9 @@ import ArticlePage from './components/ArticlePage';
 import AdminDashboard from './components/AdminDashboard';
 import LoginModal from './components/LoginModal';
 import NewsPage from './components/NewsPage';
+import WhatsAppPopup from './components/WhatsAppPopup';
 import { Clock, Sparkles, X, Eye, EyeOff } from 'lucide-react';
+import { slugify } from './lib/utils';
 import './App.css';
 
 // Helper to interleave/mix articles from different categories to ensure home page diversity
@@ -251,9 +253,10 @@ function HomePage() {
         (art.excerpt && art.excerpt.toLowerCase().includes(searchQuery.toLowerCase()))
       );
 
-  // Navigate to article page instead of opening modal
+  // Navigate to article page using title-based URL slugs
   const handleArticleClick = (article) => {
-    if (article?.id) navigate(`/article/${article.id}`);
+    const target = article.slug || slugify(article.title) || article.id;
+    if (target) navigate(`/article/${target}`);
   };
 
   return (
@@ -344,10 +347,15 @@ export default function App() {
   const location = useLocation();
 
   useEffect(() => {
-    // Generate/retrieve Session ID
     let sid = localStorage.getItem('newsSessionId');
     if (!sid) {
-      sid = crypto.randomUUID();
+      sid = (typeof crypto !== 'undefined' && crypto.randomUUID)
+        ? crypto.randomUUID()
+        : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+            const r = Math.random() * 16 | 0;
+            const v = c === 'x' ? r : (r & 0x3 | 0x8);
+            return v.toString(16);
+          });
       localStorage.setItem('newsSessionId', sid);
     }
     // Log the page visit to Supabase
@@ -361,7 +369,7 @@ export default function App() {
     <>
       <Routes>
         <Route path="/" element={<HomePage />} />
-        <Route path="/article/:id" element={<ArticlePage />} />
+        <Route path="/article/:slug" element={<ArticlePage />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/news" element={<NewsPage defaultCategory="NEWS" />} />
         <Route path="/business" element={<NewsPage defaultCategory="BUSINESS" />} />
@@ -372,6 +380,7 @@ export default function App() {
         <Route path="/entertainment" element={<NewsPage defaultCategory="ENTERTAINMENT" />} />
       </Routes>
       <LoginModal />
+      <WhatsAppPopup />
     </>
   );
 }

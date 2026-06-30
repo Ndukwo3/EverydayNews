@@ -10,6 +10,8 @@
 
 import { supabase } from './supabase';
 
+export const WHATSAPP_BOT_NUMBER = '2349061494960';
+
 // ─────────────────────────────────────────────
 //  SESSION IDENTITY (anonymous per browser tab)
 // ─────────────────────────────────────────────
@@ -36,47 +38,81 @@ export async function fetchArticles() {
   return data;
 }
 
-/** Fetch a single article by ID (supports prefixed IDs for different tables) */
-export async function fetchArticle(id) {
-  const idStr = String(id);
-  if (idStr.startsWith('ep-')) {
-    const numericId = Number(idStr.replace('ep-', ''));
-    const { data, error } = await supabase
-      .from('editors_picks')
-      .select('*')
-      .eq('id', numericId)
-      .single();
-    if (error) throw error;
-    return data;
-  } else if (idStr.startsWith('tr-')) {
-    const numericId = Number(idStr.replace('tr-', ''));
-    const { data, error } = await supabase
-      .from('trending_articles')
-      .select('*')
-      .eq('id', numericId)
-      .single();
-    if (error) throw error;
-    return data;
-  } else if (idStr.startsWith('story-')) {
-    const numericId = Number(idStr.replace('story-', ''));
-    const { data, error } = await supabase
-      .from('story_articles')
-      .select('*')
-      .eq('id', numericId)
-      .single();
-    if (error) throw error;
-    return data;
-  } else {
-    const numericId = Number(id);
-    const { data, error } = await supabase
+/** Fetch a single article by slug (falls back to numeric ID lookup for legacy urls) */
+export async function fetchArticle(slug) {
+  const slugStr = String(slug);
+
+  // 1. Try articles table by slug
+  const { data: art } = await supabase
+    .from('articles')
+    .select('*')
+    .eq('slug', slugStr)
+    .maybeSingle();
+  if (art) return art;
+
+  // 2. Try editors_picks table by slug
+  const { data: ep } = await supabase
+    .from('editors_picks')
+    .select('*')
+    .eq('slug', slugStr)
+    .maybeSingle();
+  if (ep) return ep;
+
+  // 3. Try trending_articles table by slug
+  const { data: tr } = await supabase
+    .from('trending_articles')
+    .select('*')
+    .eq('slug', slugStr)
+    .maybeSingle();
+  if (tr) return tr;
+
+  // 4. Try story_articles table by slug
+  const { data: story } = await supabase
+    .from('story_articles')
+    .select('*')
+    .eq('slug', slugStr)
+    .maybeSingle();
+  if (story) return story;
+
+  // Legacy fallback: if parameter is numeric, look up by ID
+  const numericId = Number(slug);
+  if (!isNaN(numericId)) {
+    // Try articles table by ID
+    const { data: legacyArt } = await supabase
       .from('articles')
       .select('*')
       .eq('id', numericId)
-      .single();
-    if (error) throw error;
-    return data;
+      .maybeSingle();
+    if (legacyArt) return legacyArt;
+
+    // Try editors_picks table by ID
+    const { data: legacyEp } = await supabase
+      .from('editors_picks')
+      .select('*')
+      .eq('id', numericId)
+      .maybeSingle();
+    if (legacyEp) return legacyEp;
+
+    // Try trending_articles table by ID
+    const { data: legacyTr } = await supabase
+      .from('trending_articles')
+      .select('*')
+      .eq('id', numericId)
+      .maybeSingle();
+    if (legacyTr) return legacyTr;
+
+    // Try story_articles table by ID
+    const { data: legacyStory } = await supabase
+      .from('story_articles')
+      .select('*')
+      .eq('id', numericId)
+      .maybeSingle();
+    if (legacyStory) return legacyStory;
   }
+
+  return null;
 }
+
 
 // ─────────────────────────────────────────────
 //  COMMENTS
@@ -553,6 +589,31 @@ export async function fetchAnalyticsSummary() {
     };
   }
 }
+
+// Subscribe a user to the WhatsApp broadcast list
+export async function subscribeWhatsApp(phoneNumber, name = '') {
+  try {
+    // Sanitize phone number (remove spaces, dashes, +, and keep only numbers)
+    const cleanNum = phoneNumber.replace(/[^0-9]/g, '');
+    if (!cleanNum) throw new Error("Invalid phone number format");
+
+    // Upsert to handle resubscriptions gracefully
+    const { data, error } = await supabase
+      .from('whatsapp_subscribers')
+      .upsert(
+        { phone_number: cleanNum, name, active: true },
+        { onConflict: 'phone_number' }
+      )
+      .select();
+
+    if (error) throw error;
+    return { success: true, data };
+  } catch (err) {
+    console.error("Failed to subscribe to WhatsApp updates:", err.message);
+    throw err;
+  }
+}
+
 
 
 

@@ -1,0 +1,211 @@
+/* Overlay background dim effect */
+.whatsapp-popup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: rgba(11, 11, 20, 0.6);
+  backdrop-filter: blur(6px);
+  padding: 20px;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+/* Modal Card */
+.whatsapp-popup-card {
+  position: relative;
+  background-color: var(--white);
+  width: 100%;
+  max-width: 420px;
+  border-radius: var(--radius-lg);
+  padding: 36px 30px;
+  box-shadow: 0 30px 65px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--border);
+  text-align: center;
+  box-sizing: border-box;
+  animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+/* Close Button */
+.popup-close-btn {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-close-btn:hover {
+  background-color: var(--bg-alt);
+  color: var(--primary);
+  transform: rotate(90deg);
+}
+
+/* Floating bell/ring icon badge */
+.popup-badge-icon {
+  width: 56px;
+  height: 56px;
+  background-color: rgba(220, 38, 38, 0.08);
+  border: 1px solid rgba(220, 38, 38, 0.18);
+  color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 16px auto;
+  box-shadow: 0 10px 20px rgba(220, 38, 38, 0.06);
+}
+
+.badge-ring-icon {
+  animation: bell-bounce 2s infinite ease-in-out;
+}
+
+/* Title and description */
+.popup-title {
+  font-size: 24px;
+  font-weight: 900;
+  color: var(--text-main);
+  margin: 0 0 10px 0;
+  letter-spacing: -0.5px;
+}
+
+.popup-desc {
+  font-size: 13.5px;
+  line-height: 1.6;
+  color: var(--text-muted);
+  margin: 0 0 24px 0;
+  padding: 0 10px;
+}
+
+/* Form Pill inputs */
+.popup-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.popup-input-group {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.popup-country-select {
+  padding: 13px 8px 13px 14px;
+  border: 1px solid var(--border);
+  border-right: none;
+  background: #f5f5f5;
+  color: var(--text-main);
+  border-radius: 50px 0 0 50px;
+  font-size: 13.5px;
+  font-weight: 700;
+  outline: none;
+  cursor: pointer;
+  height: 48px;
+  box-sizing: border-box;
+}
+
+.popup-country-select:focus {
+  background: #fff;
+  border-color: var(--primary);
+}
+
+.popup-tel-input {
+  flex: 1;
+  padding: 13px 18px;
+  border: 1px solid var(--border);
+  border-radius: 0 50px 50px 0;
+  font-size: 13.5px;
+  font-family: var(--font-sans);
+  background: #f5f5f5;
+  color: var(--text-main);
+  outline: none;
+  height: 48px;
+  box-sizing: border-box;
+  transition: all 0.2s;
+}
+
+.popup-tel-input:focus {
+  background: #fff;
+  border-color: var(--primary);
+  border-left: 1px solid var(--primary);
+}
+
+/* Subscribe button */
+.popup-subscribe-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  background-color: var(--primary);
+  color: #fff;
+  font-size: 13.5px;
+  font-weight: 750;
+  letter-spacing: 0.5px;
+  border: none;
+  border-radius: 50px;
+  cursor: pointer;
+  width: 100%;
+  transition: background-color 0.2s, transform 0.1s;
+}
+
+.popup-subscribe-btn:hover {
+  background-color: #c53030;
+}
+
+.popup-subscribe-btn:active {
+  transform: scale(0.98);
+}
+
+/* Footer disclaimer */
+.popup-footer-note {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin: 14px 0 0 0;
+}
+
+/* Animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes bell-bounce {
+  0%, 100% { transform: rotate(0); }
+  15% { transform: rotate(12deg); }
+  30% { transform: rotate(-10deg); }
+  45% { transform: rotate(6deg); }
+  60% { transform: rotate(-4deg); }
+  75% { transform: rotate(2deg); }
+}
+
+/* Mobile responsive adjustments */
+@media (max-width: 480px) {
+  .whatsapp-popup-card {
+    padding: 30px 20px;
+  }
+  .popup-title {
+    font-size: 21px;
+  }
+}

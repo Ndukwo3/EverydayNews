@@ -6,7 +6,7 @@ import FlashTicker from './FlashTicker';
 import Header from './Header';
 import Footer from './Footer';
 import { useAuth } from '../context/AuthContext';
-import { formatRelativeTime, estimateReadingTime } from '../lib/utils';
+import { formatRelativeTime, estimateReadingTime, slugify } from '../lib/utils';
 import './ArticlePage.css';
 
 // Combine all mock articles as fallback
@@ -97,7 +97,7 @@ function getDynamicTagsAndHashtags(title, category) {
 }
 
 export default function ArticlePage() {
-  const { id } = useParams();
+  const { slug } = useParams();
   const navigate = useNavigate();
   const { openLoginModal } = useAuth();
 
@@ -160,14 +160,15 @@ export default function ArticlePage() {
       setLoading(true);
       try {
         // Try fetching from Supabase first
-        const dbArticle = await fetchArticle(id);
+        const dbArticle = await fetchArticle(slug);
         if (!dbArticle) {
           throw new Error('Article not found in database');
         }
         if (!cancelled) {
           // Normalize Supabase column names to the shape our JSX expects
           setArticle({
-            id: id,
+            id: dbArticle.id,
+            slug: dbArticle.slug,
             title: dbArticle.title,
             excerpt: dbArticle.excerpt,
             body: dbArticle.body,
@@ -187,7 +188,7 @@ export default function ArticlePage() {
       } catch {
         // Supabase article not found — try mock data
         if (!cancelled) {
-          const mock = allMockArticles.find((a) => String(a.id) === String(id));
+          const mock = allMockArticles.find((a) => String(a.slug || slugify(a.title)) === String(slug));
           setArticle(mock || null);
         }
       }
@@ -216,7 +217,7 @@ export default function ArticlePage() {
     loadArticle();
     loadAllArticles();
     return () => { cancelled = true; };
-  }, [id]);
+  }, [slug]);
 
   // ─── Load comments from Supabase ───
   useEffect(() => {
@@ -300,7 +301,7 @@ export default function ArticlePage() {
   // Get suggested articles (excluding the current one)
   const suggestedSource = allArticles.length > 0 ? allArticles : allMockArticles;
   const suggestedArticles = suggestedSource
-    .filter((a) => String(a.id) !== String(id))
+    .filter((a) => String(a.slug || slugify(a.title) || a.id) !== String(slug))
     .slice(0, 4);
 
   // Toggle Like (Supabase)

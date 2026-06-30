@@ -114,7 +114,7 @@ async function connectToWhatsApp() {
       } catch (err) {
         console.error('Failed to unsubscribe user:', err.message);
       }
-    } else if (cleanMsg === 'START' || cleanMsg === 'SUBSCRIBE') {
+    } else if (['START', 'SUBSCRIBE', 'HELLO', 'HI', 'HEY', 'JOIN', 'YES'].includes(cleanMsg)) {
       try {
         const { error } = await supabase
           .from('whatsapp_subscribers')

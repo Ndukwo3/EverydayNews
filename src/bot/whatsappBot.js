@@ -142,7 +142,9 @@ async function connectToWhatsApp() {
 
   // Schedule checking loop (runs every 30 seconds)
   setInterval(async () => {
-    const now = new Date();
+    // Resolve current time in Nigeria (Africa/Lagos) timezone
+    const lagosTimeStr = new Date().toLocaleString("en-US", { timeZone: "Africa/Lagos" });
+    const now = new Date(lagosTimeStr);
     const currentHour = now.getHours();
     const currentMin = now.getMinutes();
     const todayKey = now.toDateString();

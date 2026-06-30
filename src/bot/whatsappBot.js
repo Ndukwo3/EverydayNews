@@ -103,30 +103,56 @@ async function connectToWhatsApp() {
 
     if (cleanMsg === 'STOP' || cleanMsg === 'UNSUBSCRIBE') {
       try {
-        const { error } = await supabase
+        // Find subscriber by either their JID or their raw phone digits
+        const { data: existing } = await supabase
           .from('whatsapp_subscribers')
-          .update({ active: false })
-          .eq('phone_number', cleanPhone);
+          .select('id')
+          .or(`phone_number.eq.${from},phone_number.eq.${cleanPhone}`)
+          .maybeSingle();
 
-        if (error) throw error;
+        if (existing) {
+          const { error } = await supabase
+            .from('whatsapp_subscribers')
+            .update({ active: false })
+            .eq('id', existing.id);
+          if (error) throw error;
+        }
+
         await sock.sendMessage(from, { text: '🔕 You have unsubscribed from Everyday News updates. Reply "START" at any time to subscribe again.' });
-        console.log(`[OPT-OUT] Unsubscribed phone number: ${cleanPhone}`);
+        console.log(`[OPT-OUT] Unsubscribed JID/Phone: ${from}`);
       } catch (err) {
         console.error('Failed to unsubscribe user:', err.message);
       }
     } else if (['START', 'SUBSCRIBE', 'HELLO', 'HI', 'HEY', 'JOIN', 'YES'].includes(cleanMsg)) {
       try {
-        const { error } = await supabase
+        // Find existing subscriber by either their JID or their raw phone digits
+        const { data: existing } = await supabase
           .from('whatsapp_subscribers')
-          .upsert({ phone_number: cleanPhone, active: true }, { onConflict: 'phone_number' });
+          .select('id')
+          .or(`phone_number.eq.${from},phone_number.eq.${cleanPhone}`)
+          .maybeSingle();
 
-        if (error) throw error;
+        if (existing) {
+          // Update existing row to active: true and set phone_number to the full JID
+          const { error } = await supabase
+            .from('whatsapp_subscribers')
+            .update({ phone_number: from, active: true })
+            .eq('id', existing.id);
+          if (error) throw error;
+        } else {
+          // Insert new row with the full JID
+          const { error } = await supabase
+            .from('whatsapp_subscribers')
+            .insert({ phone_number: from, active: true });
+          if (error) throw error;
+        }
+
         const welcomeText = `🔔 *Welcome to Everyday News!*\n\n` +
           `You will receive daily news briefs 3 times a day (Sunrise, Blue Sky, and Twilight bulletins) covering Latest news, Trending news, and more!\n\n` +
           `📌 *Important:* Please save this number as *Everyday News Bot* to your contacts so you can view banner images and click links successfully.\n\n` +
           `👉 Reply *DONE* once you have saved the contact!`;
         await sock.sendMessage(from, { text: welcomeText });
-        console.log(`[OPT-IN] Subscribed phone number: ${cleanPhone}`);
+        console.log(`[OPT-IN] Subscribed JID/Phone: ${from}`);
       } catch (err) {
         console.error('Failed to subscribe user:', err.message);
       }
@@ -291,7 +317,7 @@ async function runQueueBroadcast(sock, slotName) {
     // 3. Send queue loop
     for (let i = 0; i < subscribers.length; i++) {
       const sub = subscribers[i];
-      const jid = `${sub.phone_number}@s.whatsapp.net`;
+      const jid = sub.phone_number.includes('@') ? sub.phone_number : `${sub.phone_number}@s.whatsapp.net`;
       
       try {
         if (imageExists) {

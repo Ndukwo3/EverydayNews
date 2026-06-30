@@ -15,6 +15,7 @@ import { createClient } from '@supabase/supabase-js';
 import ws from 'ws';
 import fs from 'fs';
 import http from 'http';
+import https from 'https';
 
 // Supabase Setup
 const SUPABASE_URL = 'https://thmndoeavlwhjvygmxys.supabase.co';
@@ -360,7 +361,7 @@ http.createServer((req, res) => {
 // Keep-alive ping to prevent Render free tier from sleeping/spinning down
 const PUBLIC_URL = 'https://everydaynews-w2yv.onrender.com';
 setInterval(() => {
-  http.get(PUBLIC_URL, (res) => {
+  https.get(PUBLIC_URL, (res) => {
     console.log(`[KEEP-ALIVE] Pinged ${PUBLIC_URL} - Status: ${res.statusCode}`);
   }).on('error', (err) => {
     console.error('[KEEP-ALIVE ERROR] Failed to ping:', err.message);

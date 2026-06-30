@@ -45,9 +45,9 @@ function slugify(text) {
 
 // Local paths to your clean bulletin banners
 const BANNER_PATHS = {
-  morning: 'C:/Users/NEV KREATION/.gemini/antigravity-ide/brain/19f14496-5543-4c2d-87e0-932453a2c301/whatsapp_morning_news_clean_1782727993914.png',
-  afternoon: 'C:/Users/NEV KREATION/.gemini/antigravity-ide/brain/19f14496-5543-4c2d-87e0-932453a2c301/whatsapp_afternoon_news_clean_1782728013024.png',
-  dawn: 'C:/Users/NEV KREATION/.gemini/antigravity-ide/brain/19f14496-5543-4c2d-87e0-932453a2c301/whatsapp_dawn_news_clean_1782728057749.png'
+  morning: './src/bot/banners/morning.png',
+  afternoon: './src/bot/banners/afternoon.png',
+  dawn: './src/bot/banners/dawn.png'
 };
 
 // Keep track of sent broadcasts for today to avoid duplicate sends
@@ -130,7 +130,7 @@ async function connectToWhatsApp() {
     // Trigger manual test broadcast to the user
     else if (cleanMsg === '!TEST' || cleanMsg === '!TESTBROADCAST') {
       console.log(`[TEST] Manual test broadcast triggered by ${cleanPhone}`);
-      await runSingleBroadcast(sock, from, 'morning');
+      await runSingleBroadcast(sock, `${cleanPhone}@s.whatsapp.net`, 'morning');
     }
   });
 

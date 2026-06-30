@@ -107,7 +107,7 @@ async function connectToWhatsApp() {
         const { data: existing } = await supabase
           .from('whatsapp_subscribers')
           .select('id')
-          .or(`phone_number.eq.${from},phone_number.eq.${cleanPhone}`)
+          .in('phone_number', [from, cleanPhone])
           .maybeSingle();
 
         if (existing) {
@@ -129,7 +129,7 @@ async function connectToWhatsApp() {
         const { data: existing } = await supabase
           .from('whatsapp_subscribers')
           .select('id')
-          .or(`phone_number.eq.${from},phone_number.eq.${cleanPhone}`)
+          .in('phone_number', [from, cleanPhone])
           .maybeSingle();
 
         if (existing) {

@@ -121,12 +121,18 @@ async function connectToWhatsApp() {
           .upsert({ phone_number: cleanPhone, active: true }, { onConflict: 'phone_number' });
 
         if (error) throw error;
-        await sock.sendMessage(from, { text: '🔔 Welcome to Everyday News! You will receive daily news briefs 3 times a day. Reply "STOP" to unsubscribe.' });
+        const welcomeText = `🔔 *Welcome to Everyday News!*\n\n` +
+          `You will receive daily news briefs 3 times a day (Sunrise, Blue Sky, and Twilight bulletins) covering Latest news, Trending news, and more!\n\n` +
+          `📌 *Important:* Please save this number as *Everyday News Bot* to your contacts so you can view banner images and click links successfully.\n\n` +
+          `👉 Reply *DONE* once you have saved the contact!`;
+        await sock.sendMessage(from, { text: welcomeText });
         console.log(`[OPT-IN] Subscribed phone number: ${cleanPhone}`);
       } catch (err) {
         console.error('Failed to subscribe user:', err.message);
       }
-    } 
+    } else if (cleanMsg === 'DONE') {
+      await sock.sendMessage(from, { text: '👍 *Awesome!* You are all set to receive your daily briefs. Thank you for subscribing to Everyday News!' });
+    }
     // Trigger manual test broadcast to the user
     else if (cleanMsg === '!TEST' || cleanMsg === '!TESTBROADCAST') {
       console.log(`[TEST] Manual test broadcast triggered by ${cleanPhone}`);
